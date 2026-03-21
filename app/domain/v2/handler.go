@@ -26,12 +26,6 @@ func registerUserRoutes(rg *gin.RouterGroup) {
 		users.GET("/:id", getUserByID)
 		users.PUT("/:id", updateUser)
 		users.DELETE("/:id", deleteUser)
-
-		// パスパラメータのサンプル
-		users.GET("/:name/hello", getUserHello)
-
-		// ワイルドカードパスパラメータのサンプル
-		users.GET("/:name/*action", getUserAction)
 	}
 }
 
@@ -53,17 +47,6 @@ func updateUser(c *gin.Context) {
 
 func deleteUser(c *gin.Context) {
 	c.Status(http.StatusNoContent)
-}
-
-func getUserHello(c *gin.Context) {
-	name := c.Param("name")
-	c.String(http.StatusOK, "Hello %s", name)
-}
-
-func getUserAction(c *gin.Context) {
-	name := c.Param("name")
-	action := c.Param("action")
-	c.String(http.StatusOK, name+" is "+action)
 }
 
 // --- products ---

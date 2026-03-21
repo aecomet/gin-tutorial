@@ -5,6 +5,8 @@
 ```
 gin-tutorial/
 ├── main.go              # エントリーポイント。サーバー起動のみ
+├── Dockerfile           # マルチステージビルド（scratch ベース）
+├── docker-compose.yml   # docker compose up -d でアプリ起動
 └── app/
     ├── router/
     │   └── router.go        # ルーティング定義。全グループをここで組み立てる
@@ -50,9 +52,7 @@ gin-tutorial/
     │   ├── POST   /users                    # 作成
     │   ├── GET    /users/:id                # 取得
     │   ├── PUT    /users/:id                # 更新
-    │   ├── DELETE /users/:id                # 削除
-    │   ├── GET    /users/:name/hello        # パスパラメータデモ
-    │   └── GET    /users/:name/*action      # ワイルドカードパスパラメータデモ
+    │   └── DELETE /users/:id               # 削除
     ├── /products
     │   └── GET    /products                 # フィルタリング・ソートデモ
     ├── /orders
