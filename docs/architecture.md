@@ -8,6 +8,9 @@ gin-tutorial/
 ├── Dockerfile           # マルチステージビルド（scratch ベース）
 ├── docker-compose.yml   # docker compose up -d でアプリ起動（logs/ をボリュームマウント）
 ├── logs/                # ログ出力ディレクトリ（.gitignore: *.log）
+├── tests/               # テストコード
+│   ├── ut/              # ユニットテスト（各ハンドラー・ミドルウェアを個別に検証）
+│   └── it/              # インテグレーションテスト（router.New() を使った E2E シナリオ）
 └── app/
     ├── logger/
     │   └── logger.go        # slog JSONハンドラーの初期化（logs/app.log へ出力）
@@ -72,6 +75,18 @@ gin-tutorial/
 ```
 
 ## 設計方針
+
+### テスト戦略
+テストは `tests/` 配下の `ut` / `it` パッケージに分離している。すべてのテストケースは AAA（Arrange / Act / Assert）パターンで記述する。
+
+- **`tests/ut/`**: 各ハンドラー・ミドルウェアを `httptest.NewRecorder()` で個別に検証する。`router.New()` を使わず最小限の `gin.Engine` を構築するため、外部依存がない。UT 単体で **約 96%** のカバレッジを達成している。
+- **`tests/it/`**: `router.New()` で実際のルーター全体を起動し、エンドポイントの正常系シナリオを E2E で検証する。
+
+テスト実行:
+```bash
+go test ./tests/...                        # 全テスト
+go test ./tests/ut/... -cover -coverpkg=./app/...  # UT カバレッジ計測
+```
 
 ### ログ出力
 `log/slog`（Go 1.21 標準ライブラリ）を使い、すべてのログを JSON 形式で `logs/app.log` に出力する。

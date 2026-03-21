@@ -44,6 +44,33 @@ docker compose down
 
 サーバーは `http://localhost:8080` で起動します。
 
+## テスト
+
+### 全テスト実行
+
+```bash
+go test ./tests/...
+```
+
+### ユニットテスト（カバレッジ計測付き）
+
+```bash
+go test ./tests/ut/... -cover -coverpkg=./app/...
+```
+
+### インテグレーションテスト
+
+```bash
+go test ./tests/it/...
+```
+
+### テスト構成
+
+| パッケージ | 内容 |
+|-----------|------|
+| `tests/ut` | 各ハンドラー・ミドルウェアの単体テスト。AAA パターン適用 |
+| `tests/it` | `router.New()` を使った全エンドポイントの正常系 E2E テスト |
+
 ### 動作確認
 
 ```bash
@@ -60,3 +87,4 @@ curl -H "Accept-Version: v2" http://localhost:8080/api/healthcheck
 ## ドキュメント
 
 - [アーキテクチャ設計資料](docs/architecture.md)
+- [テスト設計資料](docs/testing.md)
