@@ -24,6 +24,8 @@ gin-tutorial/
             └── handler.go   # v2 ドメインルート（users, products, orders, items）
         └── v3/
             └── handler.go   # v3 モデルバインディング・バリデーションのデモ
+        └── v4/
+            └── handler.go   # v4 Basic認証・goroutine非同期処理のデモ
 ```
 
 ## ルーティング構成
@@ -42,25 +44,26 @@ gin-tutorial/
 │   ├── GET  /articles         # ページネーション（limit/offset）
 │   └── GET  /events           # ページネーション（カーソルベース）
 │
-└── /v3                        # モデルバインディング・バリデーションデモ
-    ├── POST /users            # JSON バインディング（required / email / min / max / gte）
-    ├── GET  /users/:id        # URI バインディング（gt=0）
-    ├── GET  /search           # クエリ バインディング（omitempty / gte / lte）
-    └── POST /login            # フォーム バインディング（required / min）
-    ├── /users
-    │   ├── GET    /users                    # 一覧
-    │   ├── POST   /users                    # 作成
-    │   ├── GET    /users/:id                # 取得
-    │   ├── PUT    /users/:id                # 更新
-    │   └── DELETE /users/:id               # 削除
-    ├── /products
-    │   └── GET    /products                 # フィルタリング・ソートデモ
-    ├── /orders
-    │   ├── GET    /orders                   # 一覧
-    │   ├── POST   /orders                   # 作成
-    │   └── GET    /orders/:id              # 取得
-    └── /items
-        └── GET    /items/:id               # カスタムエラーハンドリングデモ
+├── /v2                        # ドメインルート
+│   ├── GET/POST       /users          # ユーザー一覧・作成
+│   ├── GET/PUT/DELETE /users/:id      # ユーザー取得・更新・削除
+│   ├── GET            /products       # フィルタリング・ソートデモ
+│   ├── GET/POST       /orders         # オーダー一覧・作成
+│   ├── GET            /orders/:id     # オーダー取得
+│   └── GET            /items/:id      # カスタムエラーハンドリングデモ
+│
+├── /v3                        # モデルバインディング・バリデーションデモ
+│   ├── POST /users            # JSON バインディング（required / email / min / max / gte）
+│   ├── GET  /users/:id        # URI バインディング（gt=0）
+│   ├── GET  /search           # クエリ バインディング（omitempty / gte / lte）
+│   ├── POST /login            # フォーム バインディング（required / min）
+│   ├── GET  /posts            # デフォルト値付きクエリ バインディング（default タグ / oneof）
+│   └── GET  /me               # ヘッダー バインディング（required / uuid4）
+│
+└── /v4                        # Basic認証・goroutine非同期処理デモ
+    ├── GET /profile           # Basic認証（gin.BasicAuth ミドルウェア）
+    ├── GET /secret            # Basic認証保護リソース
+    └── GET /async             # goroutine による並列タスク実行
 ```
 
 ## 設計方針
