@@ -10,22 +10,22 @@ gin-tutorial/
 └── app/
     ├── router/
     │   └── router.go        # ルーティング定義。全グループをここで組み立てる
-    ├── handler/             # Gin汎用ユーティリティ（特定ドメインに依存しない共通処理）
+    ├── handler/             # 共通ユーティリティ（特定ドメインに依存しない）
     │   ├── errors.go        # AppError 型・共通エラー変数
     │   ├── health.go        # ヘルスチェックハンドラー
     │   └── response.go      # 統一レスポンス型 (Response, OK, Fail)
     ├── middleware/          # Ginミドルウェア
-    │   ├── error.go         # エラーハンドリングミドルウェア（AppError → JSON変換）
-    │   └── version.go       # Accept-Version ヘッダーバージョニングミドルウェア
-    └── domain/              # ドメイン・バージョン別ハンドラー
+    │   ├── error.go         # エラーハンドリング（AppError → JSON変換）
+    │   └── version.go       # Accept-Version ヘッダーバージョニング
+    └── domain/              # バージョン別ハンドラー
         ├── v1/
-        │   └── handler.go   # v1 APIデモ（Gin機能サンプル群）
-        └── v2/
-            └── handler.go   # v2 ドメインルート（users, products, orders, items）
-        └── v3/
-            └── handler.go   # v3 モデルバインディング・バリデーションのデモ
+        │   └── handler.go   # Gin基本機能デモ（フォーム・ページネーション等）
+        ├── v2/
+        │   └── handler.go   # リソースベースCRUD（users / products / orders / items）
+        ├── v3/
+        │   └── handler.go   # モデルバインディング・バリデーションデモ
         └── v4/
-            └── handler.go   # v4 Basic認証・goroutine非同期処理のデモ
+            └── handler.go   # Basic認証・goroutine非同期処理デモ
 ```
 
 ## ルーティング構成
@@ -70,9 +70,11 @@ gin-tutorial/
 
 ### パッケージ分割
 - **`handler/`** は特定ドメインに依存しない共通処理のみを置く。レスポンス形式・エラー型・ヘルスチェックが該当する。
-- **`domain/v1/`** はGin機能を示すサンプルAPIをまとめる。フォーム・ページネーション等のデモが対象。
-- **`domain/v2/`** はリソースベースのドメインAPIをまとめる。users / products / orders / items の各リソースハンドラーを1ファイルに集約する。
-- **`middleware/`** はリクエスト横断的な処理を置く。
+- **`middleware/`** はリクエスト横断的な処理を置く。ErrorHandler・Version ミドルウェアが該当する。
+- **`domain/v1/`** はGin基本機能のサンプルAPIをまとめる。クエリパラメータ・フォームデータ・ページネーション等のデモが対象。
+- **`domain/v2/`** はリソースベースのCRUD APIをまとめる。users / products / orders / items の各リソースハンドラーを1ファイルに集約する。フィルタリング・ソート・カスタムエラーハンドリングもここでデモする。
+- **`domain/v3/`** はモデルバインディングとバリデーションのサンプルAPIをまとめる。JSON / URI / クエリ / フォーム / ヘッダー / デフォルト値の各バインディングパターンをカバーする。
+- **`domain/v4/`** はGinの認証と非同期処理のサンプルAPIをまとめる。`gin.BasicAuth` ミドルウェアと `sync.WaitGroup` を使った goroutine 並列実行が対象。
 
 ### エラーハンドリング
 `handler.AppError` 型を `c.Error()` にセットし、`middleware.ErrorHandler` が一括してJSONレスポンスに変換する。ハンドラー内で直接 `c.JSON` を呼ぶ必要はない。

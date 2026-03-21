@@ -46,7 +46,8 @@ These instructions apply to the entire repository.
 - If the user asks for a commit, perform the following checks in order and only proceed when no blocking issues remain:
   1. **Format**: Run `gofmt -l .` and confirm no files are reported. If any are found, apply `gofmt -w` on those files before committing.
   2. **Vet**: Run `go vet ./...` and confirm no issues are reported.
-  3. **Code Review**: Review the diff against the Code Review Rules above.
+  3. **Doc Consistency**: Verify that `docs/architecture.md` (directory structure, routing table, design policy) and `README.md` accurately reflect the actual application code. Any discrepancy is a blocking issue.
+  4. **Code Review**: Review the diff against the Code Review Rules above.
 - Before finalizing a commit message, verify it follows Conventional Commits.
 - Use the pattern: `<type>(<scope>): <subject>` where useful.
 - Prefer concise, imperative subjects.
