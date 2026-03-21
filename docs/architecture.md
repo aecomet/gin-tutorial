@@ -5,20 +5,21 @@
 ```
 gin-tutorial/
 ├── main.go              # エントリーポイント。サーバー起動のみ
-├── router/
-│   └── router.go        # ルーティング定義。全グループをここで組み立てる
-├── handler/             # Gin汎用ユーティリティ（特定ドメインに依存しない共通処理）
-│   ├── errors.go        # AppError 型・共通エラー変数
-│   ├── health.go        # ヘルスチェックハンドラー
-│   ├── response.go      # 統一レスポンス型 (Response, OK, Fail)
-├── middleware/          # Ginミドルウェア
-│   ├── error.go         # エラーハンドリングミドルウェア（AppError → JSON変換）
-│   └── version.go       # Accept-Version ヘッダーバージョニングミドルウェア
-└── domain/              # ドメイン・バージョン別ハンドラー
-    ├── v1/
-    │   └── handler.go   # v1 APIデモ（Gin機能サンプル群）
-    └── v2/
-        └── handler.go   # v2 ドメインルート（users, products, orders, items）
+└── app/
+    ├── router/
+    │   └── router.go        # ルーティング定義。全グループをここで組み立てる
+    ├── handler/             # Gin汎用ユーティリティ（特定ドメインに依存しない共通処理）
+    │   ├── errors.go        # AppError 型・共通エラー変数
+    │   ├── health.go        # ヘルスチェックハンドラー
+    │   └── response.go      # 統一レスポンス型 (Response, OK, Fail)
+    ├── middleware/          # Ginミドルウェア
+    │   ├── error.go         # エラーハンドリングミドルウェア（AppError → JSON変換）
+    │   └── version.go       # Accept-Version ヘッダーバージョニングミドルウェア
+    └── domain/              # ドメイン・バージョン別ハンドラー
+        ├── v1/
+        │   └── handler.go   # v1 APIデモ（Gin機能サンプル群）
+        └── v2/
+            └── handler.go   # v2 ドメインルート（users, products, orders, items）
 ```
 
 ## ルーティング構成

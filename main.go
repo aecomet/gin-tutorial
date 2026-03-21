@@ -3,7 +3,7 @@ package main
 import (
 	"log"
 
-	"gin-tutorial/router"
+	"gin-tutorial/app/router"
 )
 
 func main() {

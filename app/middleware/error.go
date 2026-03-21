@@ -4,7 +4,7 @@ import (
 	"errors"
 	"net/http"
 
-	"gin-tutorial/handler"
+	"gin-tutorial/app/handler"
 
 	"github.com/gin-gonic/gin"
 )

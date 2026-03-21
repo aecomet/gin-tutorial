@@ -1,10 +1,10 @@
 package router
 
 import (
-	v1 "gin-tutorial/domain/v1"
-	v2 "gin-tutorial/domain/v2"
-	"gin-tutorial/handler"
-	"gin-tutorial/middleware"
+	v1 "gin-tutorial/app/domain/v1"
+	v2 "gin-tutorial/app/domain/v2"
+	"gin-tutorial/app/handler"
+	"gin-tutorial/app/middleware"
 
 	"github.com/gin-gonic/gin"
 )

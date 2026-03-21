@@ -3,7 +3,7 @@ package v2
 import (
 	"net/http"
 
-	"gin-tutorial/handler"
+	"gin-tutorial/app/handler"
 
 	"github.com/gin-gonic/gin"
 )
