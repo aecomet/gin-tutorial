@@ -3,6 +3,7 @@ package router
 import (
 	v1 "gin-tutorial/app/domain/v1"
 	v2 "gin-tutorial/app/domain/v2"
+	v3 "gin-tutorial/app/domain/v3"
 	"gin-tutorial/app/handler"
 	"gin-tutorial/app/middleware"
 
@@ -21,6 +22,7 @@ func New() *gin.Engine {
 
 	v1.RegisterRoutes(api.Group("/v1"))
 	v2.RegisterRoutes(api.Group("/v2"))
+	v3.RegisterRoutes(api.Group("/v3"))
 
 	// 登録済みルート一覧
 	api.GET("/routes", func(c *gin.Context) {

@@ -20,6 +20,8 @@ gin-tutorial/
         │   └── handler.go   # v1 APIデモ（Gin機能サンプル群）
         └── v2/
             └── handler.go   # v2 ドメインルート（users, products, orders, items）
+        └── v3/
+            └── handler.go   # v3 モデルバインディング・バリデーションのデモ
 ```
 
 ## ルーティング構成
@@ -38,7 +40,11 @@ gin-tutorial/
 │   ├── GET  /articles         # ページネーション（limit/offset）
 │   └── GET  /events           # ページネーション（カーソルベース）
 │
-└── /v2                        # ドメインルート
+└── /v3                        # モデルバインディング・バリデーションデモ
+    ├── POST /users            # JSON バインディング（required / email / min / max / gte）
+    ├── GET  /users/:id        # URI バインディング（gt=0）
+    ├── GET  /search           # クエリ バインディング（omitempty / gte / lte）
+    └── POST /login            # フォーム バインディング（required / min）
     ├── /users
     │   ├── GET    /users                    # 一覧
     │   ├── POST   /users                    # 作成
