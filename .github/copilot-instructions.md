@@ -35,7 +35,12 @@ These instructions apply to the entire repository.
 - Prefer consistent JSON response shapes and field naming within the same API surface.
 - Keep binding and validation tags readable and aligned with existing struct tag style in the file.
 
-## Commit Message Rules
+## Documentation Rules
+- When making any code changes (new features, refactoring, route additions, structural changes), always update the following two files:
+  - `README.md`: Keep the tech stack versions and run instructions up to date.
+  - `docs/architecture.md`: Keep the directory structure, routing table, and design policy sections accurate and current.
+- Do not skip this step even for small changes. Documentation must stay in sync with the code at all times.
+
 - Before creating or finalizing any commit, review the staged or proposed diff against the Code Review Rules and report findings first.
 - Do not proceed directly to commit creation when a review has not been performed in the current task.
 - If the user asks for a commit, perform the review first and only then propose or create the commit when no blocking issues remain.

@@ -1,34 +1,39 @@
 package router
 
 import (
+	v1 "gin-tutorial/domain/v1"
+	v2 "gin-tutorial/domain/v2"
 	"gin-tutorial/handler"
+	"gin-tutorial/middleware"
 
 	"github.com/gin-gonic/gin"
 )
 
 func New() *gin.Engine {
 	r := gin.Default()
+	r.Use(middleware.ErrorHandler())
+	r.Use(middleware.Version())
 
-	// パスパラメータ
-	r.GET("/user/:name", handler.GetUser)
+	api := r.Group("/api")
 
-	// ワイルドカードパスパラメータ
-	r.GET("/user/:name/*action", handler.GetUserAction)
+	// ヘルスチェック（ヘッダーバージョニングのサンプル: Accept-Version: v1 or v2）
+	api.GET("/healthcheck", handler.HealthCheck)
 
-	// クエリパラメータ
-	r.GET("/welcome", handler.Welcome)
+	v1.RegisterRoutes(api.Group("/v1"))
+	v2.RegisterRoutes(api.Group("/v2"))
 
-	// POSTフォームデータ
-	r.POST("/form_post", handler.FormPost)
-
-	// クエリパラメータ + POSTフォームデータの組み合わせ
-	r.POST("/post", handler.Post)
-
-	// multipart/form-data（ファイルアップロード）
-	r.POST("/multipart", handler.MultipartForm)
-
-	// クエリマップ + フォームマップ
-	r.POST("/form_map", handler.FormMap)
+	// 登録済みルート一覧
+	api.GET("/routes", func(c *gin.Context) {
+		routes := r.Routes()
+		list := make([]gin.H, 0, len(routes))
+		for _, route := range routes {
+			list = append(list, gin.H{
+				"method": route.Method,
+				"path":   route.Path,
+			})
+		}
+		c.JSON(200, list)
+	})
 
 	return r
 }
