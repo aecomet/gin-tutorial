@@ -2,6 +2,7 @@ package middleware
 
 import (
 	"errors"
+	"log/slog"
 	"net/http"
 
 	"gin-tutorial/app/handler"
@@ -24,6 +25,10 @@ func ErrorHandler() gin.HandlerFunc {
 				"error":   gin.H{"code": appErr.Code, "message": appErr.Message},
 			})
 		} else {
+			slog.Error("unhandled error",
+				slog.String("error", err.Error()),
+				slog.String("path", c.Request.URL.Path),
+			)
 			c.JSON(http.StatusInternalServerError, gin.H{
 				"success": false,
 				"error":   gin.H{"code": "INTERNAL", "message": "an unexpected error occurred"},

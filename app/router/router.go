@@ -12,7 +12,9 @@ import (
 )
 
 func New() *gin.Engine {
-	r := gin.Default()
+	r := gin.New()
+	r.Use(middleware.Recovery())
+	r.Use(middleware.Logger())
 	r.Use(middleware.ErrorHandler())
 	r.Use(middleware.Version())
 

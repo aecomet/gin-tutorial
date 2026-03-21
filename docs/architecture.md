@@ -6,8 +6,11 @@
 gin-tutorial/
 ├── main.go              # エントリーポイント。サーバー起動のみ
 ├── Dockerfile           # マルチステージビルド（scratch ベース）
-├── docker-compose.yml   # docker compose up -d でアプリ起動
+├── docker-compose.yml   # docker compose up -d でアプリ起動（logs/ をボリュームマウント）
+├── logs/                # ログ出力ディレクトリ（.gitignore: *.log）
 └── app/
+    ├── logger/
+    │   └── logger.go        # slog JSONハンドラーの初期化（logs/app.log へ出力）
     ├── router/
     │   └── router.go        # ルーティング定義。全グループをここで組み立てる
     ├── handler/             # 共通ユーティリティ（特定ドメインに依存しない）
@@ -16,6 +19,8 @@ gin-tutorial/
     │   └── response.go      # 統一レスポンス型 (Response, OK, Fail)
     ├── middleware/          # Ginミドルウェア
     │   ├── error.go         # エラーハンドリング（AppError → JSON変換）
+    │   ├── logger.go        # HTTPリクエストログ（slog JSON出力）
+    │   ├── recovery.go      # panicリカバリー（slog.Error で記録）
     │   └── version.go       # Accept-Version ヘッダーバージョニング
     └── domain/              # バージョン別ハンドラー
         ├── v1/
@@ -68,7 +73,16 @@ gin-tutorial/
 
 ## 設計方針
 
+### ログ出力
+`log/slog`（Go 1.21 標準ライブラリ）を使い、すべてのログを JSON 形式で `logs/app.log` に出力する。
+
+- **`logger.Init()`** をサーバー起動前に呼び出し、`slog.SetDefault` でプロセス全体のロガーを設定する。
+- **`middleware.Logger()`** がリクエストごとに `method / path / status / latency / ip / user_agent` を `slog.Info` で記録する。
+- **`middleware.Recovery()`** が panic 発生時に `slog.Error` で記録し、500 を返す。
+- ログファイルは `logs/app.log` に追記される。Docker 環境では `docker-compose.yml` の volume mount（`./logs:/app/logs`）でホストからも確認できる。`logs/*.log` は `.gitignore` で除外し、ディレクトリのみ `logs/.gitkeep` で管理する。
+
 ### パッケージ分割
+- **`logger/`** はアプリ起動時に一度だけ呼ぶ初期化処理を置く。`slog.NewJSONHandler` で `logs/app.log` への JSON ログを設定する。ファイルクローズ用の cleanup 関数を返す。
 - **`handler/`** は特定ドメインに依存しない共通処理のみを置く。レスポンス形式・エラー型・ヘルスチェックが該当する。
 - **`middleware/`** はリクエスト横断的な処理を置く。ErrorHandler・Version ミドルウェアが該当する。
 - **`domain/v1/`** はGin基本機能のサンプルAPIをまとめる。クエリパラメータ・フォームデータ・ページネーション等のデモが対象。

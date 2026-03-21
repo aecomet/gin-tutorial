@@ -27,8 +27,10 @@ FROM scratch
 COPY --from=builder /usr/share/zoneinfo /usr/share/zoneinfo
 COPY --from=builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
 
-COPY --from=builder /build/server /server
+COPY --from=builder /build/server /app/server
 
 EXPOSE 8080
 
-ENTRYPOINT ["/server"]
+WORKDIR /app
+
+ENTRYPOINT ["/app/server"]
