@@ -43,7 +43,10 @@ These instructions apply to the entire repository.
 
 - Before creating or finalizing any commit, review the staged or proposed diff against the Code Review Rules and report findings first.
 - Do not proceed directly to commit creation when a review has not been performed in the current task.
-- If the user asks for a commit, perform the review first and only then propose or create the commit when no blocking issues remain.
+- If the user asks for a commit, perform the following checks in order and only proceed when no blocking issues remain:
+  1. **Format**: Run `gofmt -l .` and confirm no files are reported. If any are found, apply `gofmt -w` on those files before committing.
+  2. **Vet**: Run `go vet ./...` and confirm no issues are reported.
+  3. **Code Review**: Review the diff against the Code Review Rules above.
 - Before finalizing a commit message, verify it follows Conventional Commits.
 - Use the pattern: `<type>(<scope>): <subject>` where useful.
 - Prefer concise, imperative subjects.

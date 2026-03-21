@@ -116,11 +116,11 @@ func login(c *gin.Context) {
 // ListPostsQuery はデフォルト値付きクエリバインディングのサンプル構造体
 // default タグで未指定時の値を定義する
 type ListPostsQuery struct {
-	Page     int    `form:"page"     binding:"omitempty,gte=1"             default:"1"`
-	PerPage  int    `form:"per_page" binding:"omitempty,gte=1,lte=100"     default:"20"`
-	Sort     string `form:"sort"     binding:"omitempty,oneof=created_at updated_at title" default:"created_at"`
-	Order    string `form:"order"    binding:"omitempty,oneof=asc desc"    default:"desc"`
-	Status   string `form:"status"   binding:"omitempty,oneof=draft published archived" default:"published"`
+	Page    int    `form:"page"     binding:"omitempty,gte=1"             default:"1"`
+	PerPage int    `form:"per_page" binding:"omitempty,gte=1,lte=100"     default:"20"`
+	Sort    string `form:"sort"     binding:"omitempty,oneof=created_at updated_at title" default:"created_at"`
+	Order   string `form:"order"    binding:"omitempty,oneof=asc desc"    default:"desc"`
+	Status  string `form:"status"   binding:"omitempty,oneof=draft published archived" default:"published"`
 }
 
 // listPosts はデフォルト値付き binding model のサンプル
