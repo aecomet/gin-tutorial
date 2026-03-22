@@ -4,9 +4,9 @@
 
 ```
 gin-tutorial/
-├── main.go              # エントリーポイント。DB初期化・マイグレーション・サーバー起動
+├── main.go              # エントリーポイント。DB・Redis初期化・gRPC並列起動・Ginサーバー起動
 ├── Dockerfile           # マルチステージビルド（scratch ベース）
-├── docker-compose.yml   # docker compose up -d でアプリ + MySQL 起動
+├── docker-compose.yml   # docker compose up -d でアプリ + MySQL + Redis 起動
 ├── logs/                # ログ出力ディレクトリ（.gitignore: *.log）
 ├── tests/               # テストコード
 │   ├── ut/              # ユニットテスト（app/ のパッケージ構成を反映）
@@ -21,6 +21,8 @@ gin-tutorial/
 └── app/
     ├── db/
     │   └── db.go            # GORM DBインスタンス初期化（環境変数からDSN構築）
+    ├── redis/
+    │   └── redis.go         # Redis クライアントシングルトン初期化（go-redis）
     ├── logger/
     │   └── logger.go        # slog JSONハンドラーの初期化（logs/app.log へ出力）
     ├── router/
@@ -34,6 +36,14 @@ gin-tutorial/
     │   ├── logger.go        # HTTPリクエストログ（slog JSON出力）
     │   ├── recovery.go      # panicリカバリー（slog.Error で記録）
     │   └── version.go       # Accept-Version ヘッダーバージョニング
+    ├── grpc/                # gRPC 関連（サービス定義・生成コード・サーバー実装）
+    │   ├── proto/
+    │   │   └── article.proto    # Protocol Buffers サービス定義
+    │   ├── pb/                  # protoc 生成コード（変更不可）
+    │   │   ├── article.pb.go
+    │   │   └── article_grpc.pb.go
+    │   └── server/
+    │       └── server.go        # gRPC サーバー実装（:50051 で起動）
     └── domain/              # バージョン別ハンドラー
         ├── v1/
         │   └── handler.go   # Gin基本機能デモ（フォーム・ページネーション等）
@@ -43,11 +53,14 @@ gin-tutorial/
         │   └── handler.go   # モデルバインディング・バリデーションデモ
         ├── v4/
         │   └── handler.go   # Basic認証・goroutine非同期処理デモ
-        └── v5/
-            ├── model.go     # Article GORMモデル（バインディング入力型を含む）
-            ├── handler.go   # GORM連携CRUDハンドラー（articles リソース）
-            ├── migrate.go   # AutoMigrateによるDDL自動適用
-            └── seed.go      # 初期データ投入（DB_SEED=true で実行）
+        ├── v5/
+        │   ├── model.go     # Article GORMモデル（バインディング入力型を含む）
+        │   ├── handler.go   # GORM連携CRUDハンドラー（articles リソース）
+        │   ├── migrate.go   # AutoMigrateによるDDL自動適用
+        │   └── seed.go      # 初期データ投入（DB_SEED=true で実行）
+        └── v6/
+            ├── handler.go   # Gin → gRPC 内部通信デモ（API Gateway パターン）
+            └── routes.go    # v6 ルート登録
 ```
 
 ## ルーティング構成
@@ -65,6 +78,7 @@ gin-tutorial/
 | `/api/v3/...` | モデルバインディング・バリデーションデモ |
 | `/api/v4/...` | Basic 認証・goroutine 非同期処理デモ |
 | `/api/v5/...` | GORM + MySQL CRUD デモ（articles リソース） |
+| `/api/v6/...` | Gin → gRPC 内部通信デモ（API Gateway パターン、Redis ストレージ） |
 
 ## 設計方針
 
@@ -97,7 +111,22 @@ go test ./tests/ut/... -cover -coverpkg=./app/...  # UT カバレッジ計測
 - **`domain/v3/`** はモデルバインディングとバリデーションのサンプルAPIをまとめる。JSON / URI / クエリ / フォーム / ヘッダー / デフォルト値の各バインディングパターンをカバーする。
 - **`domain/v4/`** はGinの認証と非同期処理のサンプルAPIをまとめる。`gin.BasicAuth` ミドルウェアと `sync.WaitGroup` を使った goroutine 並列実行が対象。
 - **`domain/v5/`** はGORMを使ったMySQL連携CRUDのサンプルAPIをまとめる。articles リソースのCRUD・ページネーション・論理削除・AutoMigrate・Seed が対象。
+- **`domain/v6/`** はGin→gRPC内部通信のサンプルAPIをまとめる。GinハンドラーがgRPCクライアントとして動作し、:50051で動くgRPCサーバーにリクエストを委譲するAPI Gatewayパターンのデモ。データはRedisに保存する。
 - **`db/`** はGORMのDBインスタンスをシングルトンとして管理する。環境変数（`DB_HOST`, `DB_PORT`, `DB_USER`, `DB_PASSWORD`, `DB_NAME`）からDSNを構築し、`db.DB` を通じてアプリ全体で共有する。
+- **`redis/`** はgo-redisクライアントのシングルトンを管理する。環境変数（`REDIS_HOST`, `REDIS_PORT`）から接続先を構築する。gRPCサーバーのストレージとして使用。
+
+### gRPC サーバー
+- **`app/grpc/proto/article.proto`**: ArticleService のサービス定義。`service` キーワードでAPIを、`message` キーワードでデータ型を定義する。
+- **`app/grpc/pb/`**: `protoc` で自動生成したGoコード。手動編集不可。
+- **`app/grpc/server/server.go`**: `pb.ArticleServiceServer` インターフェースを実装したサーバー。Redisをストレージとして使用。`Start(port)` 関数を `main.go` の goroutine から呼び出す。
+
+gRPC サーバーは HTTP とは独立した **:50051** ポートで動作する。`grpcurl` を使って直接 gRPC サービスを呼び出すことも可能。
+
+```bash
+# grpcurl で直接 gRPC を呼び出す例
+grpcurl -plaintext localhost:50051 list
+grpcurl -plaintext -d '{"page":1,"per_page":10}' localhost:50051 article.ArticleService/ListArticles
+```
 
 ### エラーハンドリング
 `handler.AppError` 型を `c.Error()` にセットし、`middleware.ErrorHandler` が一括してJSONレスポンスに変換する。ハンドラー内で直接 `c.JSON` を呼ぶ必要はない。

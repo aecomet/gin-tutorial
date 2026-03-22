@@ -983,3 +983,180 @@ DELETE /api/v5/articles/1
 ```json
 { "success": false, "error": { "code": "NOT_FOUND", "message": "article not found" } }
 ```
+
+---
+
+## v6 — Gin → gRPC 内部通信デモ（API Gateway パターン）
+
+v6 エンドポイントは **API Gateway パターン**のデモです。Gin ハンドラーが gRPC クライアントとして動作し、内部の gRPC サーバー（`:50051`）に処理を委譲します。データは **Redis** に保存されます。
+
+### アーキテクチャ
+
+```
+REST クライアント
+    ↓ HTTP :8080
+GET /api/v6/articles
+    ↓ gRPC (localhost:50051)
+ArticleService.ListArticles()
+    ↓ Redis
+grpc:article:* キーでデータ取得
+```
+
+### gRPC を直接呼び出す（grpcurl）
+
+```bash
+# サービス一覧
+grpcurl -plaintext localhost:50051 list
+
+# 記事一覧
+grpcurl -plaintext -d '{"page":1,"per_page":10}' localhost:50051 article.ArticleService/ListArticles
+
+# 記事作成
+grpcurl -plaintext -d '{"title":"タイトル","body":"本文","author":"Alice"}' localhost:50051 article.ArticleService/CreateArticle
+```
+
+---
+
+### GET /api/v6/articles
+
+記事一覧を返す。gRPC の `ListArticles` を呼び出す。
+
+**クエリパラメータ**
+
+| Name | 型 | 必須 | デフォルト | 制約 | 説明 |
+|------|----|------|-----------|------|------|
+| `page` | integer | No | `1` | ≥1 | ページ番号 |
+| `per_page` | integer | No | `10` | 1〜100 | 1ページあたりの件数 |
+
+**リクエスト例**
+```
+GET /api/v6/articles?page=1&per_page=10
+```
+
+**レスポンス例 (200)**
+```json
+{
+  "success": true,
+  "data": {
+    "articles": [
+      { "id": 1, "title": "gRPCとGinで作るAPI", "body": "gRPCはHTTP/2上で動作する高速なRPCフレームワークです。", "author": "Alice" }
+    ],
+    "total": 1,
+    "page": 1,
+    "per_page": 10
+  }
+}
+```
+
+---
+
+### POST /api/v6/articles
+
+新規記事を作成する。gRPC の `CreateArticle` を呼び出す。
+
+**リクエストボディ** (`Content-Type: application/json`)
+
+| フィールド | 型 | 必須 | 説明 |
+|-----------|-----|------|------|
+| `title` | string | **Yes** | タイトル |
+| `body` | string | No | 本文 |
+| `author` | string | No | 著者名 |
+
+**リクエスト例**
+```json
+{ "title": "Protocol Buffersとは", "body": "protoファイルでスキーマを定義します。", "author": "Bob" }
+```
+
+**レスポンス例 (201)**
+```json
+{
+  "success": true,
+  "data": { "id": 3, "title": "Protocol Buffersとは", "body": "protoファイルでスキーマを定義します。", "author": "Bob" }
+}
+```
+
+**エラーレスポンス (400)** — `title` が未指定
+```json
+{ "success": false, "error": { "code": "BAD_REQUEST", "message": "Key: 'CreateArticleInput.Title' Error:..." } }
+```
+
+---
+
+### GET /api/v6/articles/:id
+
+指定 ID の記事を返す。gRPC の `GetArticle` を呼び出す。
+
+**パスパラメータ**
+
+| Name | 型 | 必須 | 説明 |
+|------|----|------|------|
+| `id` | integer | **Yes** | 記事ID |
+
+**リクエスト例**
+```
+GET /api/v6/articles/1
+```
+
+**レスポンス例 (200)**
+```json
+{ "success": true, "data": { "id": 1, "title": "gRPCとGinで作るAPI", "body": "...", "author": "Alice" } }
+```
+
+**エラーレスポンス (404)** — 存在しない ID
+```json
+{ "success": false, "error": { "code": "NOT_FOUND", "message": "article not found: id=99" } }
+```
+
+---
+
+### PUT /api/v6/articles/:id
+
+指定 ID の記事を更新する。gRPC の `UpdateArticle` を呼び出す。空文字列のフィールドは更新しない。
+
+**パスパラメータ**
+
+| Name | 型 | 必須 | 説明 |
+|------|----|------|------|
+| `id` | integer | **Yes** | 記事ID |
+
+**リクエストボディ** (`Content-Type: application/json`)
+
+| フィールド | 型 | 必須 | 説明 |
+|-----------|-----|------|------|
+| `title` | string | No | タイトル（空文字の場合は更新しない） |
+| `body` | string | No | 本文（空文字の場合は更新しない） |
+| `author` | string | No | 著者名（空文字の場合は更新しない） |
+
+**リクエスト例**
+```json
+{ "title": "更新後のタイトル" }
+```
+
+**レスポンス例 (200)**
+```json
+{ "success": true, "data": { "id": 1, "title": "更新後のタイトル", "body": "gRPCはHTTP/2上で動作する高速なRPCフレームワークです。", "author": "Alice" } }
+```
+
+---
+
+### DELETE /api/v6/articles/:id
+
+指定 ID の記事を削除する。gRPC の `DeleteArticle` を呼び出す。
+
+**パスパラメータ**
+
+| Name | 型 | 必須 | 説明 |
+|------|----|------|------|
+| `id` | integer | **Yes** | 記事ID |
+
+**リクエスト例**
+```
+DELETE /api/v6/articles/1
+```
+
+**レスポンス (204)** — ボディなし
+
+**エラーレスポンス (404)** — 存在しない ID
+```json
+{ "success": false, "error": { "code": "NOT_FOUND", "message": "article not found: id=99" } }
+```

@@ -7,7 +7,9 @@ import (
 
 	"gin-tutorial/app/db"
 	v5 "gin-tutorial/app/domain/v5"
+	grpcserver "gin-tutorial/app/grpc/server"
 	"gin-tutorial/app/logger"
+	rdb "gin-tutorial/app/redis"
 	"gin-tutorial/app/router"
 )
 
@@ -37,6 +39,22 @@ func main() {
 			os.Exit(1)
 		}
 	}
+
+	// Redis に接続する（gRPC サーバーのストレージとして使用）
+	if err := rdb.Init(); err != nil {
+		slog.Error("failed to connect to redis", slog.String("error", err.Error()))
+		os.Exit(1)
+	}
+	slog.Info("redis connected")
+
+	// gRPC サーバーを別 goroutine で起動する。
+	// Gin（HTTP）と gRPC は独立したポートで並行動作する。
+	go func() {
+		if err := grpcserver.Start("50051"); err != nil {
+			slog.Error("gRPC server failed", slog.String("error", err.Error()))
+			os.Exit(1)
+		}
+	}()
 
 	r := router.New()
 

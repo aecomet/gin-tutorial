@@ -1,0 +1,78 @@
+syntax = "proto3";
+
+// パッケージ名: gRPCのサービス識別子として使われる（例: article.ArticleService）
+package article;
+
+// Go コード生成時のパッケージパスを指定する
+option go_package = "gin-tutorial/app/grpc/pb";
+
+// ArticleService: 記事に関するCRUD操作を提供するgRPCサービス定義
+// rpc <メソッド名>(<リクエスト型>) returns (<レスポンス型>) の形式でAPIを宣言する
+service ArticleService {
+  rpc ListArticles(ListArticlesRequest)   returns (ListArticlesResponse);   // 記事一覧
+  rpc GetArticle(GetArticleRequest)       returns (GetArticleResponse);     // 記事取得
+  rpc CreateArticle(CreateArticleRequest) returns (CreateArticleResponse);  // 記事作成
+  rpc UpdateArticle(UpdateArticleRequest) returns (UpdateArticleResponse);  // 記事更新
+  rpc DeleteArticle(DeleteArticleRequest) returns (DeleteArticleResponse);  // 記事削除
+}
+
+// message: データ構造の定義。JSONでいうobject。
+// フィールドには「型 名前 = フィールド番号」を書く。
+// フィールド番号はシリアライズ時の識別子で、変更すると後方互換が壊れるため注意。
+message Article {
+  uint32 id     = 1; // 記事ID
+  string title  = 2; // タイトル
+  string body   = 3; // 本文
+  string author = 4; // 著者名
+}
+
+// ListArticles: 記事一覧取得
+message ListArticlesRequest {
+  int32 page     = 1; // ページ番号（1始まり）
+  int32 per_page = 2; // 1ページあたりの件数
+}
+
+message ListArticlesResponse {
+  repeated Article articles = 1; // repeated: 配列（0件以上）
+  int32            total    = 2; // 全件数
+}
+
+// GetArticle: 記事1件取得
+message GetArticleRequest {
+  uint32 id = 1;
+}
+
+message GetArticleResponse {
+  Article article = 1;
+}
+
+// CreateArticle: 記事作成
+message CreateArticleRequest {
+  string title  = 1;
+  string body   = 2;
+  string author = 3;
+}
+
+message CreateArticleResponse {
+  Article article = 1; // 作成された記事（IDが採番済み）
+}
+
+// UpdateArticle: 記事更新（全フィールド上書き）
+message UpdateArticleRequest {
+  uint32 id     = 1;
+  string title  = 2;
+  string body   = 3;
+  string author = 4;
+}
+
+message UpdateArticleResponse {
+  Article article = 1; // 更新後の記事
+}
+
+// DeleteArticle: 記事削除
+message DeleteArticleRequest {
+  uint32 id = 1;
+}
+
+// 削除成功時はボディなし（空メッセージ）
+message DeleteArticleResponse {}
