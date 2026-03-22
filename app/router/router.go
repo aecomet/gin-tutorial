@@ -5,6 +5,7 @@ import (
 	v2 "gin-tutorial/app/domain/v2"
 	v3 "gin-tutorial/app/domain/v3"
 	v4 "gin-tutorial/app/domain/v4"
+	v5 "gin-tutorial/app/domain/v5"
 	"gin-tutorial/app/handler"
 	"gin-tutorial/app/middleware"
 
@@ -27,6 +28,7 @@ func New() *gin.Engine {
 	v2.RegisterRoutes(api.Group("/v2"))
 	v3.RegisterRoutes(api.Group("/v3"))
 	v4.RegisterRoutes(api.Group("/v4"))
+	v5.RegisterRoutes(api.Group("/v5"))
 
 	// 登録済みルート一覧
 	api.GET("/routes", func(c *gin.Context) {

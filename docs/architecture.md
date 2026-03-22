@@ -4,14 +4,16 @@
 
 ```
 gin-tutorial/
-├── main.go              # エントリーポイント。サーバー起動のみ
+├── main.go              # エントリーポイント。DB初期化・マイグレーション・サーバー起動
 ├── Dockerfile           # マルチステージビルド（scratch ベース）
-├── docker-compose.yml   # docker compose up -d でアプリ起動（logs/ をボリュームマウント）
+├── docker-compose.yml   # docker compose up -d でアプリ + MySQL 起動
 ├── logs/                # ログ出力ディレクトリ（.gitignore: *.log）
 ├── tests/               # テストコード
 │   ├── ut/              # ユニットテスト（各ハンドラー・ミドルウェアを個別に検証）
 │   └── it/              # インテグレーションテスト（router.New() を使った E2E シナリオ）
 └── app/
+    ├── db/
+    │   └── db.go            # GORM DBインスタンス初期化（環境変数からDSN構築）
     ├── logger/
     │   └── logger.go        # slog JSONハンドラーの初期化（logs/app.log へ出力）
     ├── router/
@@ -32,47 +34,30 @@ gin-tutorial/
         │   └── handler.go   # リソースベースCRUD（users / products / orders / items）
         ├── v3/
         │   └── handler.go   # モデルバインディング・バリデーションデモ
-        └── v4/
-            └── handler.go   # Basic認証・goroutine非同期処理デモ
+        ├── v4/
+        │   └── handler.go   # Basic認証・goroutine非同期処理デモ
+        └── v5/
+            ├── model.go     # Article GORMモデル（バインディング入力型を含む）
+            ├── handler.go   # GORM連携CRUDハンドラー（articles リソース）
+            ├── migrate.go   # AutoMigrateによるDDL自動適用
+            └── seed.go      # 初期データ投入（DB_SEED=true で実行）
 ```
 
 ## ルーティング構成
 
-```
-/api
-├── GET  /healthcheck          # ヘルスチェック（Accept-Versionヘッダーバージョニングのデモ）
-├── GET  /routes               # 登録済みルート一覧
-│
-├── /v1                        # Gin機能デモ
-│   ├── GET  /welcome          # クエリパラメータ
-│   ├── POST /form_post        # POSTフォームデータ
-│   ├── POST /post             # クエリパラメータ + POSTフォームデータ
-│   ├── POST /form_map         # QueryMap + PostFormMap
-│   ├── POST /multipart        # multipart/form-data（ファイルアップロード）
-│   ├── GET  /articles         # ページネーション（limit/offset）
-│   └── GET  /events           # ページネーション（カーソルベース）
-│
-├── /v2                        # ドメインルート
-│   ├── GET/POST       /users          # ユーザー一覧・作成
-│   ├── GET/PUT/DELETE /users/:id      # ユーザー取得・更新・削除
-│   ├── GET            /products       # フィルタリング・ソートデモ
-│   ├── GET/POST       /orders         # オーダー一覧・作成
-│   ├── GET            /orders/:id     # オーダー取得
-│   └── GET            /items/:id      # カスタムエラーハンドリングデモ
-│
-├── /v3                        # モデルバインディング・バリデーションデモ
-│   ├── POST /users            # JSON バインディング（required / email / min / max / gte）
-│   ├── GET  /users/:id        # URI バインディング（gt=0）
-│   ├── GET  /search           # クエリ バインディング（omitempty / gte / lte）
-│   ├── POST /login            # フォーム バインディング（required / min）
-│   ├── GET  /posts            # デフォルト値付きクエリ バインディング（default タグ / oneof）
-│   └── GET  /me               # ヘッダー バインディング（required / uuid4）
-│
-└── /v4                        # Basic認証・goroutine非同期処理デモ
-    ├── GET /profile           # Basic認証（gin.BasicAuth ミドルウェア）
-    ├── GET /secret            # Basic認証保護リソース
-    └── GET /async             # goroutine による並列タスク実行
-```
+各エンドポイントの詳細な API 仕様は **[docs/api.md](api.md)** を参照してください。
+
+ルートの概要:
+
+| プレフィックス | 説明 |
+|--------------|------|
+| `GET /api/healthcheck` | ヘルスチェック（Accept-Version ヘッダーバージョニングのデモ） |
+| `GET /api/routes` | 登録済みルート一覧 |
+| `/api/v1/...` | Gin 基本機能デモ（クエリパラメータ・フォーム・ページネーション） |
+| `/api/v2/...` | リソースベース CRUD デモ（users / products / orders / items） |
+| `/api/v3/...` | モデルバインディング・バリデーションデモ |
+| `/api/v4/...` | Basic 認証・goroutine 非同期処理デモ |
+| `/api/v5/...` | GORM + MySQL CRUD デモ（articles リソース） |
 
 ## 設計方針
 
@@ -104,6 +89,8 @@ go test ./tests/ut/... -cover -coverpkg=./app/...  # UT カバレッジ計測
 - **`domain/v2/`** はリソースベースのCRUD APIをまとめる。users / products / orders / items の各リソースハンドラーを1ファイルに集約する。フィルタリング・ソート・カスタムエラーハンドリングもここでデモする。
 - **`domain/v3/`** はモデルバインディングとバリデーションのサンプルAPIをまとめる。JSON / URI / クエリ / フォーム / ヘッダー / デフォルト値の各バインディングパターンをカバーする。
 - **`domain/v4/`** はGinの認証と非同期処理のサンプルAPIをまとめる。`gin.BasicAuth` ミドルウェアと `sync.WaitGroup` を使った goroutine 並列実行が対象。
+- **`domain/v5/`** はGORMを使ったMySQL連携CRUDのサンプルAPIをまとめる。articles リソースのCRUD・ページネーション・論理削除・AutoMigrate・Seed が対象。
+- **`db/`** はGORMのDBインスタンスをシングルトンとして管理する。環境変数（`DB_HOST`, `DB_PORT`, `DB_USER`, `DB_PASSWORD`, `DB_NAME`）からDSNを構築し、`db.DB` を通じてアプリ全体で共有する。
 
 ### エラーハンドリング
 `handler.AppError` 型を `c.Error()` にセットし、`middleware.ErrorHandler` が一括してJSONレスポンスに変換する。ハンドラー内で直接 `c.JSON` を呼ぶ必要はない。
