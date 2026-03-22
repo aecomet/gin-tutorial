@@ -1,4 +1,4 @@
-package ut
+package v2_test
 
 import (
 	"encoding/json"
@@ -14,6 +14,10 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+func init() {
+	gin.SetMode(gin.TestMode)
+}
+
 func newV2Engine() *gin.Engine {
 	r := gin.New()
 	v2.RegisterRoutes(r.Group("/v2"))
@@ -28,15 +32,10 @@ func newV2EngineWithErrorHandler() *gin.Engine {
 }
 
 func TestListUsers(t *testing.T) {
-	// Arrange
 	r := newV2Engine()
 	w := httptest.NewRecorder()
 	req := httptest.NewRequest(http.MethodGet, "/v2/users", nil)
-
-	// Act
 	r.ServeHTTP(w, req)
-
-	// Assert
 	assert.Equal(t, http.StatusOK, w.Code)
 	var resp map[string]interface{}
 	require.NoError(t, json.Unmarshal(w.Body.Bytes(), &resp))
@@ -44,15 +43,10 @@ func TestListUsers(t *testing.T) {
 }
 
 func TestCreateUser_V2(t *testing.T) {
-	// Arrange
 	r := newV2Engine()
 	w := httptest.NewRecorder()
 	req := httptest.NewRequest(http.MethodPost, "/v2/users", nil)
-
-	// Act
 	r.ServeHTTP(w, req)
-
-	// Assert
 	assert.Equal(t, http.StatusCreated, w.Code)
 	var resp map[string]interface{}
 	require.NoError(t, json.Unmarshal(w.Body.Bytes(), &resp))
@@ -60,15 +54,10 @@ func TestCreateUser_V2(t *testing.T) {
 }
 
 func TestGetUserByID_V2(t *testing.T) {
-	// Arrange
 	r := newV2Engine()
 	w := httptest.NewRecorder()
 	req := httptest.NewRequest(http.MethodGet, "/v2/users/42", nil)
-
-	// Act
 	r.ServeHTTP(w, req)
-
-	// Assert
 	assert.Equal(t, http.StatusOK, w.Code)
 	var resp map[string]interface{}
 	require.NoError(t, json.Unmarshal(w.Body.Bytes(), &resp))
@@ -76,15 +65,10 @@ func TestGetUserByID_V2(t *testing.T) {
 }
 
 func TestUpdateUser(t *testing.T) {
-	// Arrange
 	r := newV2Engine()
 	w := httptest.NewRecorder()
 	req := httptest.NewRequest(http.MethodPut, "/v2/users/42", nil)
-
-	// Act
 	r.ServeHTTP(w, req)
-
-	// Assert
 	assert.Equal(t, http.StatusOK, w.Code)
 	var resp map[string]interface{}
 	require.NoError(t, json.Unmarshal(w.Body.Bytes(), &resp))
@@ -92,29 +76,19 @@ func TestUpdateUser(t *testing.T) {
 }
 
 func TestDeleteUser(t *testing.T) {
-	// Arrange
 	r := newV2Engine()
 	w := httptest.NewRecorder()
 	req := httptest.NewRequest(http.MethodDelete, "/v2/users/42", nil)
-
-	// Act
 	r.ServeHTTP(w, req)
-
-	// Assert
 	assert.Equal(t, http.StatusNoContent, w.Code)
 	assert.Empty(t, w.Body.String())
 }
 
 func TestListProducts_Defaults(t *testing.T) {
-	// Arrange
 	r := newV2Engine()
 	w := httptest.NewRecorder()
 	req := httptest.NewRequest(http.MethodGet, "/v2/products", nil)
-
-	// Act
 	r.ServeHTTP(w, req)
-
-	// Assert
 	assert.Equal(t, http.StatusOK, w.Code)
 	var resp map[string]interface{}
 	require.NoError(t, json.Unmarshal(w.Body.Bytes(), &resp))
@@ -124,15 +98,10 @@ func TestListProducts_Defaults(t *testing.T) {
 }
 
 func TestListProducts_ValidSortOrder(t *testing.T) {
-	// Arrange
 	r := newV2Engine()
 	w := httptest.NewRecorder()
 	req := httptest.NewRequest(http.MethodGet, "/v2/products?sort=price&order=asc", nil)
-
-	// Act
 	r.ServeHTTP(w, req)
-
-	// Assert
 	assert.Equal(t, http.StatusOK, w.Code)
 	var resp map[string]interface{}
 	require.NoError(t, json.Unmarshal(w.Body.Bytes(), &resp))
@@ -142,15 +111,10 @@ func TestListProducts_ValidSortOrder(t *testing.T) {
 }
 
 func TestListProducts_InvalidSort(t *testing.T) {
-	// Arrange
 	r := newV2Engine()
 	w := httptest.NewRecorder()
 	req := httptest.NewRequest(http.MethodGet, "/v2/products?sort=invalid", nil)
-
-	// Act
 	r.ServeHTTP(w, req)
-
-	// Assert
 	assert.Equal(t, http.StatusOK, w.Code)
 	var resp map[string]interface{}
 	require.NoError(t, json.Unmarshal(w.Body.Bytes(), &resp))
@@ -159,15 +123,10 @@ func TestListProducts_InvalidSort(t *testing.T) {
 }
 
 func TestListProducts_InvalidOrder(t *testing.T) {
-	// Arrange
 	r := newV2Engine()
 	w := httptest.NewRecorder()
 	req := httptest.NewRequest(http.MethodGet, "/v2/products?order=invalid", nil)
-
-	// Act
 	r.ServeHTTP(w, req)
-
-	// Assert
 	assert.Equal(t, http.StatusOK, w.Code)
 	var resp map[string]interface{}
 	require.NoError(t, json.Unmarshal(w.Body.Bytes(), &resp))
@@ -176,15 +135,10 @@ func TestListProducts_InvalidOrder(t *testing.T) {
 }
 
 func TestListOrders(t *testing.T) {
-	// Arrange
 	r := newV2Engine()
 	w := httptest.NewRecorder()
 	req := httptest.NewRequest(http.MethodGet, "/v2/orders", nil)
-
-	// Act
 	r.ServeHTTP(w, req)
-
-	// Assert
 	assert.Equal(t, http.StatusOK, w.Code)
 	var resp map[string]interface{}
 	require.NoError(t, json.Unmarshal(w.Body.Bytes(), &resp))
@@ -192,15 +146,10 @@ func TestListOrders(t *testing.T) {
 }
 
 func TestCreateOrder(t *testing.T) {
-	// Arrange
 	r := newV2Engine()
 	w := httptest.NewRecorder()
 	req := httptest.NewRequest(http.MethodPost, "/v2/orders", nil)
-
-	// Act
 	r.ServeHTTP(w, req)
-
-	// Assert
 	assert.Equal(t, http.StatusCreated, w.Code)
 	var resp map[string]interface{}
 	require.NoError(t, json.Unmarshal(w.Body.Bytes(), &resp))
@@ -208,15 +157,10 @@ func TestCreateOrder(t *testing.T) {
 }
 
 func TestGetOrderByID(t *testing.T) {
-	// Arrange
 	r := newV2Engine()
 	w := httptest.NewRecorder()
 	req := httptest.NewRequest(http.MethodGet, "/v2/orders/1", nil)
-
-	// Act
 	r.ServeHTTP(w, req)
-
-	// Assert
 	assert.Equal(t, http.StatusOK, w.Code)
 	var resp map[string]interface{}
 	require.NoError(t, json.Unmarshal(w.Body.Bytes(), &resp))
@@ -224,15 +168,10 @@ func TestGetOrderByID(t *testing.T) {
 }
 
 func TestGetItemByID_NotFound(t *testing.T) {
-	// Arrange
 	r := newV2EngineWithErrorHandler()
 	w := httptest.NewRecorder()
 	req := httptest.NewRequest(http.MethodGet, "/v2/items/0", nil)
-
-	// Act
 	r.ServeHTTP(w, req)
-
-	// Assert
 	assert.Equal(t, http.StatusNotFound, w.Code)
 	var resp map[string]interface{}
 	require.NoError(t, json.Unmarshal(w.Body.Bytes(), &resp))
@@ -242,15 +181,10 @@ func TestGetItemByID_NotFound(t *testing.T) {
 }
 
 func TestGetItemByID_Found(t *testing.T) {
-	// Arrange
 	r := newV2EngineWithErrorHandler()
 	w := httptest.NewRecorder()
 	req := httptest.NewRequest(http.MethodGet, "/v2/items/1", nil)
-
-	// Act
 	r.ServeHTTP(w, req)
-
-	// Assert
 	assert.Equal(t, http.StatusOK, w.Code)
 	var resp map[string]interface{}
 	require.NoError(t, json.Unmarshal(w.Body.Bytes(), &resp))

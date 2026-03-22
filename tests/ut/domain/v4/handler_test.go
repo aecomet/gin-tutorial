@@ -1,4 +1,4 @@
-package ut
+package v4_test
 
 import (
 	"encoding/base64"
@@ -14,6 +14,10 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+func init() {
+	gin.SetMode(gin.TestMode)
+}
+
 func newV4Engine() *gin.Engine {
 	r := gin.New()
 	v4.RegisterRoutes(r.Group("/v4"))
@@ -25,16 +29,11 @@ func basicAuth(user, pass string) string {
 }
 
 func TestGetProfile_Authenticated(t *testing.T) {
-	// Arrange
 	r := newV4Engine()
 	w := httptest.NewRecorder()
 	req := httptest.NewRequest(http.MethodGet, "/v4/profile", nil)
 	req.Header.Set("Authorization", basicAuth("admin", "secret"))
-
-	// Act
 	r.ServeHTTP(w, req)
-
-	// Assert
 	assert.Equal(t, http.StatusOK, w.Code)
 	var resp map[string]interface{}
 	require.NoError(t, json.Unmarshal(w.Body.Bytes(), &resp))
@@ -43,29 +42,19 @@ func TestGetProfile_Authenticated(t *testing.T) {
 }
 
 func TestGetProfile_Unauthenticated(t *testing.T) {
-	// Arrange
 	r := newV4Engine()
 	w := httptest.NewRecorder()
 	req := httptest.NewRequest(http.MethodGet, "/v4/profile", nil)
-
-	// Act
 	r.ServeHTTP(w, req)
-
-	// Assert
 	assert.Equal(t, http.StatusUnauthorized, w.Code)
 }
 
 func TestGetSecret_Authenticated(t *testing.T) {
-	// Arrange
 	r := newV4Engine()
 	w := httptest.NewRecorder()
 	req := httptest.NewRequest(http.MethodGet, "/v4/secret", nil)
 	req.Header.Set("Authorization", basicAuth("user", "password"))
-
-	// Act
 	r.ServeHTTP(w, req)
-
-	// Assert
 	assert.Equal(t, http.StatusOK, w.Code)
 	var resp map[string]interface{}
 	require.NoError(t, json.Unmarshal(w.Body.Bytes(), &resp))
@@ -74,28 +63,18 @@ func TestGetSecret_Authenticated(t *testing.T) {
 }
 
 func TestGetSecret_Unauthenticated(t *testing.T) {
-	// Arrange
 	r := newV4Engine()
 	w := httptest.NewRecorder()
 	req := httptest.NewRequest(http.MethodGet, "/v4/secret", nil)
-
-	// Act
 	r.ServeHTTP(w, req)
-
-	// Assert
 	assert.Equal(t, http.StatusUnauthorized, w.Code)
 }
 
 func TestAsyncTasks(t *testing.T) {
-	// Arrange
 	r := newV4Engine()
 	w := httptest.NewRecorder()
 	req := httptest.NewRequest(http.MethodGet, "/v4/async", nil)
-
-	// Act
 	r.ServeHTTP(w, req)
-
-	// Assert
 	assert.Equal(t, http.StatusOK, w.Code)
 	var resp map[string]interface{}
 	require.NoError(t, json.Unmarshal(w.Body.Bytes(), &resp))

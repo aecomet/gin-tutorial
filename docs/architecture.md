@@ -9,7 +9,14 @@ gin-tutorial/
 ├── docker-compose.yml   # docker compose up -d でアプリ + MySQL 起動
 ├── logs/                # ログ出力ディレクトリ（.gitignore: *.log）
 ├── tests/               # テストコード
-│   ├── ut/              # ユニットテスト（各ハンドラー・ミドルウェアを個別に検証）
+│   ├── ut/              # ユニットテスト（app/ のパッケージ構成を反映）
+│   │   ├── db/          # app/db のテスト
+│   │   ├── logger/      # app/logger のテスト
+│   │   ├── handler/     # app/handler のテスト（errors / health / response）
+│   │   ├── middleware/  # app/middleware のテスト（error / logger / recovery / version）
+│   │   └── domain/      # app/domain のテスト
+│   │       ├── v1/ ~ v4/   # 各バージョンのハンドラーテスト
+│   │       └── v5/      # handler / migrate / seed のテスト
 │   └── it/              # インテグレーションテスト（router.New() を使った E2E シナリオ）
 └── app/
     ├── db/

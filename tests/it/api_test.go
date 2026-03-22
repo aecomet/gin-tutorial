@@ -11,11 +11,9 @@ import (
 	"testing"
 
 	"gin-tutorial/app/db"
-	"gin-tutorial/app/router"
 
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/gin-gonic/gin"
-	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	mysqldriver "gorm.io/driver/mysql"
 	"gorm.io/gorm"
@@ -67,32 +65,4 @@ func parseBody(t *testing.T, w *httptest.ResponseRecorder) map[string]interface{
 	var resp map[string]interface{}
 	require.NoError(t, json.Unmarshal(w.Body.Bytes(), &resp))
 	return resp
-}
-
-// --- HealthCheck ---
-
-func TestHealthCheck_V1(t *testing.T) {
-	// Arrange
-	r := router.New()
-
-	// Act
-	w := doRequest(r, http.MethodGet, "/api/healthcheck", nil, nil)
-
-	// Assert
-	assert.Equal(t, http.StatusOK, w.Code)
-	resp := parseBody(t, w)
-	assert.Equal(t, "ok", resp["status"])
-}
-
-func TestHealthCheck_V2Header(t *testing.T) {
-	// Arrange
-	r := router.New()
-
-	// Act
-	w := doRequest(r, http.MethodGet, "/api/healthcheck", nil, map[string]string{"Accept-Version": "v2"})
-
-	// Assert
-	assert.Equal(t, http.StatusOK, w.Code)
-	resp := parseBody(t, w)
-	assert.Equal(t, "v2", resp["version"])
 }

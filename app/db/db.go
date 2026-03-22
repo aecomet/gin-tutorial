@@ -14,8 +14,12 @@ var DB *gorm.DB
 
 // Init はデータベース接続を初期化する
 func Init() error {
-	dsn := buildDSN()
-	db, err := gorm.Open(mysql.Open(dsn), &gorm.Config{
+	return InitWithDialector(mysql.Open(BuildDSN()))
+}
+
+// InitWithDialector は任意のDialectorでDB接続を初期化する（テスト用途を含む）
+func InitWithDialector(dialector gorm.Dialector) error {
+	db, err := gorm.Open(dialector, &gorm.Config{
 		Logger: logger.Default.LogMode(logger.Warn),
 	})
 	if err != nil {
@@ -25,7 +29,8 @@ func Init() error {
 	return nil
 }
 
-func buildDSN() string {
+// BuildDSN は環境変数からMySQL接続文字列を組み立てる
+func BuildDSN() string {
 	host := getEnv("DB_HOST", "localhost")
 	port := getEnv("DB_PORT", "3306")
 	user := getEnv("DB_USER", "root")

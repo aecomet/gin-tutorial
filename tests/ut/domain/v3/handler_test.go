@@ -1,4 +1,4 @@
-package ut
+package v3_test
 
 import (
 	"bytes"
@@ -15,6 +15,10 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+func init() {
+	gin.SetMode(gin.TestMode)
+}
+
 func newV3Engine() *gin.Engine {
 	r := gin.New()
 	v3.RegisterRoutes(r.Group("/v3"))
@@ -22,17 +26,12 @@ func newV3Engine() *gin.Engine {
 }
 
 func TestCreateUser_V3_Valid(t *testing.T) {
-	// Arrange
 	r := newV3Engine()
 	body := `{"name":"Alice","email":"alice@example.com","age":25,"password":"secret123"}`
 	w := httptest.NewRecorder()
 	req := httptest.NewRequest(http.MethodPost, "/v3/users", bytes.NewBufferString(body))
 	req.Header.Set("Content-Type", "application/json")
-
-	// Act
 	r.ServeHTTP(w, req)
-
-	// Assert
 	assert.Equal(t, http.StatusOK, w.Code)
 	var resp map[string]interface{}
 	require.NoError(t, json.Unmarshal(w.Body.Bytes(), &resp))
@@ -44,17 +43,12 @@ func TestCreateUser_V3_Valid(t *testing.T) {
 }
 
 func TestCreateUser_V3_MissingName(t *testing.T) {
-	// Arrange
 	r := newV3Engine()
 	body := `{"email":"alice@example.com","age":25,"password":"secret123"}`
 	w := httptest.NewRecorder()
 	req := httptest.NewRequest(http.MethodPost, "/v3/users", bytes.NewBufferString(body))
 	req.Header.Set("Content-Type", "application/json")
-
-	// Act
 	r.ServeHTTP(w, req)
-
-	// Assert
 	assert.Equal(t, http.StatusBadRequest, w.Code)
 	var resp map[string]interface{}
 	require.NoError(t, json.Unmarshal(w.Body.Bytes(), &resp))
@@ -64,17 +58,12 @@ func TestCreateUser_V3_MissingName(t *testing.T) {
 }
 
 func TestCreateUser_V3_InvalidEmail(t *testing.T) {
-	// Arrange
 	r := newV3Engine()
 	body := `{"name":"Alice","email":"not-an-email","age":25,"password":"secret123"}`
 	w := httptest.NewRecorder()
 	req := httptest.NewRequest(http.MethodPost, "/v3/users", bytes.NewBufferString(body))
 	req.Header.Set("Content-Type", "application/json")
-
-	// Act
 	r.ServeHTTP(w, req)
-
-	// Assert
 	assert.Equal(t, http.StatusBadRequest, w.Code)
 	var resp map[string]interface{}
 	require.NoError(t, json.Unmarshal(w.Body.Bytes(), &resp))
@@ -83,15 +72,10 @@ func TestCreateUser_V3_InvalidEmail(t *testing.T) {
 }
 
 func TestGetUser_V3_Valid(t *testing.T) {
-	// Arrange
 	r := newV3Engine()
 	w := httptest.NewRecorder()
 	req := httptest.NewRequest(http.MethodGet, "/v3/users/5", nil)
-
-	// Act
 	r.ServeHTTP(w, req)
-
-	// Assert
 	assert.Equal(t, http.StatusOK, w.Code)
 	var resp map[string]interface{}
 	require.NoError(t, json.Unmarshal(w.Body.Bytes(), &resp))
@@ -100,15 +84,10 @@ func TestGetUser_V3_Valid(t *testing.T) {
 }
 
 func TestGetUser_V3_ZeroID(t *testing.T) {
-	// Arrange
 	r := newV3Engine()
 	w := httptest.NewRecorder()
 	req := httptest.NewRequest(http.MethodGet, "/v3/users/0", nil)
-
-	// Act
 	r.ServeHTTP(w, req)
-
-	// Assert
 	assert.Equal(t, http.StatusBadRequest, w.Code)
 	var resp map[string]interface{}
 	require.NoError(t, json.Unmarshal(w.Body.Bytes(), &resp))
@@ -117,15 +96,10 @@ func TestGetUser_V3_ZeroID(t *testing.T) {
 }
 
 func TestSearch_WithKeyword(t *testing.T) {
-	// Arrange
 	r := newV3Engine()
 	w := httptest.NewRecorder()
 	req := httptest.NewRequest(http.MethodGet, "/v3/search?keyword=gin", nil)
-
-	// Act
 	r.ServeHTTP(w, req)
-
-	// Assert
 	assert.Equal(t, http.StatusOK, w.Code)
 	var resp map[string]interface{}
 	require.NoError(t, json.Unmarshal(w.Body.Bytes(), &resp))
@@ -136,15 +110,10 @@ func TestSearch_WithKeyword(t *testing.T) {
 }
 
 func TestSearch_MissingKeyword(t *testing.T) {
-	// Arrange
 	r := newV3Engine()
 	w := httptest.NewRecorder()
 	req := httptest.NewRequest(http.MethodGet, "/v3/search", nil)
-
-	// Act
 	r.ServeHTTP(w, req)
-
-	// Assert
 	assert.Equal(t, http.StatusBadRequest, w.Code)
 	var resp map[string]interface{}
 	require.NoError(t, json.Unmarshal(w.Body.Bytes(), &resp))
@@ -153,15 +122,10 @@ func TestSearch_MissingKeyword(t *testing.T) {
 }
 
 func TestSearch_DefaultPagePerPage(t *testing.T) {
-	// Arrange
 	r := newV3Engine()
 	w := httptest.NewRecorder()
 	req := httptest.NewRequest(http.MethodGet, "/v3/search?keyword=test", nil)
-
-	// Act
 	r.ServeHTTP(w, req)
-
-	// Assert
 	assert.Equal(t, http.StatusOK, w.Code)
 	var resp map[string]interface{}
 	require.NoError(t, json.Unmarshal(w.Body.Bytes(), &resp))
@@ -171,17 +135,12 @@ func TestSearch_DefaultPagePerPage(t *testing.T) {
 }
 
 func TestLogin_Valid(t *testing.T) {
-	// Arrange
 	r := newV3Engine()
 	body := strings.NewReader("username=alice&password=secret123")
 	w := httptest.NewRecorder()
 	req := httptest.NewRequest(http.MethodPost, "/v3/login", body)
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
-
-	// Act
 	r.ServeHTTP(w, req)
-
-	// Assert
 	assert.Equal(t, http.StatusOK, w.Code)
 	var resp map[string]interface{}
 	require.NoError(t, json.Unmarshal(w.Body.Bytes(), &resp))
@@ -191,17 +150,12 @@ func TestLogin_Valid(t *testing.T) {
 }
 
 func TestLogin_MissingUsername(t *testing.T) {
-	// Arrange
 	r := newV3Engine()
 	body := strings.NewReader("password=secret123")
 	w := httptest.NewRecorder()
 	req := httptest.NewRequest(http.MethodPost, "/v3/login", body)
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
-
-	// Act
 	r.ServeHTTP(w, req)
-
-	// Assert
 	assert.Equal(t, http.StatusBadRequest, w.Code)
 	var resp map[string]interface{}
 	require.NoError(t, json.Unmarshal(w.Body.Bytes(), &resp))
@@ -210,15 +164,10 @@ func TestLogin_MissingUsername(t *testing.T) {
 }
 
 func TestListPosts_Defaults(t *testing.T) {
-	// Arrange
 	r := newV3Engine()
 	w := httptest.NewRecorder()
 	req := httptest.NewRequest(http.MethodGet, "/v3/posts", nil)
-
-	// Act
 	r.ServeHTTP(w, req)
-
-	// Assert
 	assert.Equal(t, http.StatusOK, w.Code)
 	var resp map[string]interface{}
 	require.NoError(t, json.Unmarshal(w.Body.Bytes(), &resp))
@@ -232,15 +181,10 @@ func TestListPosts_Defaults(t *testing.T) {
 }
 
 func TestListPosts_CustomParams(t *testing.T) {
-	// Arrange
 	r := newV3Engine()
 	w := httptest.NewRecorder()
 	req := httptest.NewRequest(http.MethodGet, "/v3/posts?page=2&per_page=10&sort=title&order=asc&status=draft", nil)
-
-	// Act
 	r.ServeHTTP(w, req)
-
-	// Assert
 	assert.Equal(t, http.StatusOK, w.Code)
 	var resp map[string]interface{}
 	require.NoError(t, json.Unmarshal(w.Body.Bytes(), &resp))
@@ -254,18 +198,13 @@ func TestListPosts_CustomParams(t *testing.T) {
 }
 
 func TestGetMe_Valid(t *testing.T) {
-	// Arrange
 	r := newV3Engine()
 	w := httptest.NewRecorder()
 	req := httptest.NewRequest(http.MethodGet, "/v3/me", nil)
 	req.Header.Set("Authorization", "Bearer token123")
 	req.Header.Set("X-Request-Id", "550e8400-e29b-41d4-a716-446655440000")
 	req.Header.Set("Accept-Language", "en-US")
-
-	// Act
 	r.ServeHTTP(w, req)
-
-	// Assert
 	assert.Equal(t, http.StatusOK, w.Code)
 	var resp map[string]interface{}
 	require.NoError(t, json.Unmarshal(w.Body.Bytes(), &resp))
@@ -275,16 +214,11 @@ func TestGetMe_Valid(t *testing.T) {
 }
 
 func TestGetMe_MissingAuthorization(t *testing.T) {
-	// Arrange
 	r := newV3Engine()
 	w := httptest.NewRecorder()
 	req := httptest.NewRequest(http.MethodGet, "/v3/me", nil)
 	req.Header.Set("X-Request-Id", "550e8400-e29b-41d4-a716-446655440000")
-
-	// Act
 	r.ServeHTTP(w, req)
-
-	// Assert
 	assert.Equal(t, http.StatusBadRequest, w.Code)
 	var resp map[string]interface{}
 	require.NoError(t, json.Unmarshal(w.Body.Bytes(), &resp))
@@ -293,17 +227,12 @@ func TestGetMe_MissingAuthorization(t *testing.T) {
 }
 
 func TestGetMe_InvalidRequestID(t *testing.T) {
-	// Arrange
 	r := newV3Engine()
 	w := httptest.NewRecorder()
 	req := httptest.NewRequest(http.MethodGet, "/v3/me", nil)
 	req.Header.Set("Authorization", "Bearer token123")
 	req.Header.Set("X-Request-Id", "not-a-uuid")
-
-	// Act
 	r.ServeHTTP(w, req)
-
-	// Assert
 	assert.Equal(t, http.StatusBadRequest, w.Code)
 	var resp map[string]interface{}
 	require.NoError(t, json.Unmarshal(w.Body.Bytes(), &resp))

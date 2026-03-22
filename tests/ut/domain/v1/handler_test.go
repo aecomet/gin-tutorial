@@ -1,4 +1,4 @@
-package ut
+package v1_test
 
 import (
 	"bytes"
@@ -16,6 +16,10 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+func init() {
+	gin.SetMode(gin.TestMode)
+}
+
 func newV1Engine() *gin.Engine {
 	r := gin.New()
 	v1.RegisterRoutes(r.Group("/v1"))
@@ -23,45 +27,30 @@ func newV1Engine() *gin.Engine {
 }
 
 func TestWelcome_DefaultGuest(t *testing.T) {
-	// Arrange
 	r := newV1Engine()
 	w := httptest.NewRecorder()
 	req := httptest.NewRequest(http.MethodGet, "/v1/welcome", nil)
-
-	// Act
 	r.ServeHTTP(w, req)
-
-	// Assert
 	assert.Equal(t, http.StatusOK, w.Code)
 	assert.Equal(t, "Hello Guest ", w.Body.String())
 }
 
 func TestWelcome_CustomName(t *testing.T) {
-	// Arrange
 	r := newV1Engine()
 	w := httptest.NewRecorder()
 	req := httptest.NewRequest(http.MethodGet, "/v1/welcome?firstname=John&lastname=Doe", nil)
-
-	// Act
 	r.ServeHTTP(w, req)
-
-	// Assert
 	assert.Equal(t, http.StatusOK, w.Code)
 	assert.Equal(t, "Hello John Doe", w.Body.String())
 }
 
 func TestFormPost_WithNick(t *testing.T) {
-	// Arrange
 	r := newV1Engine()
 	w := httptest.NewRecorder()
 	body := strings.NewReader("message=hello&nick=Alice")
 	req := httptest.NewRequest(http.MethodPost, "/v1/form_post", body)
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
-
-	// Act
 	r.ServeHTTP(w, req)
-
-	// Assert
 	assert.Equal(t, http.StatusOK, w.Code)
 	var resp map[string]interface{}
 	require.NoError(t, json.Unmarshal(w.Body.Bytes(), &resp))
@@ -70,17 +59,12 @@ func TestFormPost_WithNick(t *testing.T) {
 }
 
 func TestFormPost_DefaultNick(t *testing.T) {
-	// Arrange
 	r := newV1Engine()
 	w := httptest.NewRecorder()
 	body := strings.NewReader("message=hi")
 	req := httptest.NewRequest(http.MethodPost, "/v1/form_post", body)
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
-
-	// Act
 	r.ServeHTTP(w, req)
-
-	// Assert
 	assert.Equal(t, http.StatusOK, w.Code)
 	var resp map[string]interface{}
 	require.NoError(t, json.Unmarshal(w.Body.Bytes(), &resp))
@@ -88,17 +72,12 @@ func TestFormPost_DefaultNick(t *testing.T) {
 }
 
 func TestPost_QueryAndForm(t *testing.T) {
-	// Arrange
 	r := newV1Engine()
 	w := httptest.NewRecorder()
 	body := strings.NewReader("name=Bob&message=test")
 	req := httptest.NewRequest(http.MethodPost, "/v1/post?id=42&page=3", body)
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
-
-	// Act
 	r.ServeHTTP(w, req)
-
-	// Assert
 	assert.Equal(t, http.StatusOK, w.Code)
 	var resp map[string]interface{}
 	require.NoError(t, json.Unmarshal(w.Body.Bytes(), &resp))
@@ -109,17 +88,12 @@ func TestPost_QueryAndForm(t *testing.T) {
 }
 
 func TestFormMap(t *testing.T) {
-	// Arrange
 	r := newV1Engine()
 	w := httptest.NewRecorder()
 	body := strings.NewReader("names[first]=Alice&names[last]=Smith")
 	req := httptest.NewRequest(http.MethodPost, "/v1/form_map?ids[a]=1&ids[b]=2", body)
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
-
-	// Act
 	r.ServeHTTP(w, req)
-
-	// Assert
 	assert.Equal(t, http.StatusOK, w.Code)
 	var resp map[string]interface{}
 	require.NoError(t, json.Unmarshal(w.Body.Bytes(), &resp))
@@ -130,7 +104,6 @@ func TestFormMap(t *testing.T) {
 }
 
 func TestMultipartUpload_WithFile(t *testing.T) {
-	// Arrange
 	r := newV1Engine()
 	var buf bytes.Buffer
 	mw := multipart.NewWriter(&buf)
@@ -140,15 +113,10 @@ func TestMultipartUpload_WithFile(t *testing.T) {
 	_, err = fw.Write([]byte("file content"))
 	require.NoError(t, err)
 	mw.Close()
-
 	w := httptest.NewRecorder()
 	req := httptest.NewRequest(http.MethodPost, "/v1/multipart", &buf)
 	req.Header.Set("Content-Type", mw.FormDataContentType())
-
-	// Act
 	r.ServeHTTP(w, req)
-
-	// Assert
 	assert.Equal(t, http.StatusOK, w.Code)
 	var resp map[string]interface{}
 	require.NoError(t, json.Unmarshal(w.Body.Bytes(), &resp))
@@ -157,34 +125,23 @@ func TestMultipartUpload_WithFile(t *testing.T) {
 }
 
 func TestMultipartUpload_WithoutFile(t *testing.T) {
-	// Arrange
 	r := newV1Engine()
 	var buf bytes.Buffer
 	mw := multipart.NewWriter(&buf)
 	_ = mw.WriteField("message", "no file")
 	mw.Close()
-
 	w := httptest.NewRecorder()
 	req := httptest.NewRequest(http.MethodPost, "/v1/multipart", &buf)
 	req.Header.Set("Content-Type", mw.FormDataContentType())
-
-	// Act
 	r.ServeHTTP(w, req)
-
-	// Assert
 	assert.Equal(t, http.StatusBadRequest, w.Code)
 }
 
 func TestListWithOffset_Defaults(t *testing.T) {
-	// Arrange
 	r := newV1Engine()
 	w := httptest.NewRecorder()
 	req := httptest.NewRequest(http.MethodGet, "/v1/articles", nil)
-
-	// Act
 	r.ServeHTTP(w, req)
-
-	// Assert
 	assert.Equal(t, http.StatusOK, w.Code)
 	var resp map[string]interface{}
 	require.NoError(t, json.Unmarshal(w.Body.Bytes(), &resp))
@@ -194,15 +151,10 @@ func TestListWithOffset_Defaults(t *testing.T) {
 }
 
 func TestListWithOffset_Custom(t *testing.T) {
-	// Arrange
 	r := newV1Engine()
 	w := httptest.NewRecorder()
 	req := httptest.NewRequest(http.MethodGet, "/v1/articles?limit=50&offset=10", nil)
-
-	// Act
 	r.ServeHTTP(w, req)
-
-	// Assert
 	assert.Equal(t, http.StatusOK, w.Code)
 	var resp map[string]interface{}
 	require.NoError(t, json.Unmarshal(w.Body.Bytes(), &resp))
@@ -212,15 +164,10 @@ func TestListWithOffset_Custom(t *testing.T) {
 }
 
 func TestListWithOffset_LimitCapped(t *testing.T) {
-	// Arrange
 	r := newV1Engine()
 	w := httptest.NewRecorder()
 	req := httptest.NewRequest(http.MethodGet, "/v1/articles?limit=200", nil)
-
-	// Act
 	r.ServeHTTP(w, req)
-
-	// Assert
 	assert.Equal(t, http.StatusOK, w.Code)
 	var resp map[string]interface{}
 	require.NoError(t, json.Unmarshal(w.Body.Bytes(), &resp))
@@ -229,15 +176,10 @@ func TestListWithOffset_LimitCapped(t *testing.T) {
 }
 
 func TestListWithCursor_Defaults(t *testing.T) {
-	// Arrange
 	r := newV1Engine()
 	w := httptest.NewRecorder()
 	req := httptest.NewRequest(http.MethodGet, "/v1/events", nil)
-
-	// Act
 	r.ServeHTTP(w, req)
-
-	// Assert
 	assert.Equal(t, http.StatusOK, w.Code)
 	var resp map[string]interface{}
 	require.NoError(t, json.Unmarshal(w.Body.Bytes(), &resp))
@@ -245,15 +187,10 @@ func TestListWithCursor_Defaults(t *testing.T) {
 }
 
 func TestListWithCursor_CustomCursorAndLimit(t *testing.T) {
-	// Arrange
 	r := newV1Engine()
 	w := httptest.NewRecorder()
 	req := httptest.NewRequest(http.MethodGet, "/v1/events?cursor=abc&limit=5", nil)
-
-	// Act
 	r.ServeHTTP(w, req)
-
-	// Assert
 	assert.Equal(t, http.StatusOK, w.Code)
 	var resp map[string]interface{}
 	require.NoError(t, json.Unmarshal(w.Body.Bytes(), &resp))
@@ -261,15 +198,10 @@ func TestListWithCursor_CustomCursorAndLimit(t *testing.T) {
 }
 
 func TestListWithCursor_LimitCapped(t *testing.T) {
-	// Arrange
 	r := newV1Engine()
 	w := httptest.NewRecorder()
 	req := httptest.NewRequest(http.MethodGet, "/v1/events?limit=200", nil)
-
-	// Act
 	r.ServeHTTP(w, req)
-
-	// Assert
 	assert.Equal(t, http.StatusOK, w.Code)
 	var resp map[string]interface{}
 	require.NoError(t, json.Unmarshal(w.Body.Bytes(), &resp))
