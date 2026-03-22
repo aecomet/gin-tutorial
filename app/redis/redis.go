@@ -17,11 +17,8 @@ var client *redis.Client
 func Init() error {
 	host := getEnv("REDIS_HOST", "localhost")
 	port := getEnv("REDIS_PORT", "6379")
-
-	client = redis.NewClient(&redis.Options{
-		Addr: fmt.Sprintf("%s:%s", host, port),
-	})
-
+	addr := fmt.Sprintf("%s:%s", host, port)
+	client = redis.NewClient(&redis.Options{Addr: addr})
 	// 接続確認
 	if err := client.Ping(context.Background()).Err(); err != nil {
 		return fmt.Errorf("failed to connect to redis: %w", err)

@@ -4,7 +4,10 @@
 package v6
 
 import (
+	"context"
+	"log/slog"
 	"net/http"
+	"os"
 	"strconv"
 
 	pb "gin-tutorial/app/grpc/pb"
@@ -17,15 +20,24 @@ import (
 	"google.golang.org/grpc/status"
 )
 
-// newGRPCClient は gRPC サーバーへの接続とクライアントスタブを生成する。
-// insecure.NewCredentials() はTLSなし接続（開発・デモ用）。
-// 本番では TLS クレデンシャルを使用すること。
-func newGRPCClient() (pb.ArticleServiceClient, *grpc.ClientConn, error) {
+// grpcDialFunc は gRPC サーバーへの接続を確立する関数。
+// テストでは GRPC_ADDR 環境変数で接続先を差し替えることができる。
+var grpcDialFunc = defaultGRPCDial
+
+func defaultGRPCDial() (pb.ArticleServiceClient, *grpc.ClientConn, error) {
+	// GRPC_ADDR 環境変数でアドレスを上書きできる（テスト・ステージング環境向け）。
+	addr := os.Getenv("GRPC_ADDR")
+	if addr == "" {
+		addr = "localhost:50051"
+	}
 	// grpc.NewClient でコネクションを確立する。
 	// ダイヤルはバックグラウンドで行われ、最初のRPC呼び出し時に接続される。
 	conn, err := grpc.NewClient(
-		"localhost:50051",
+		addr,
 		grpc.WithTransportCredentials(insecure.NewCredentials()),
+		// クライアントインターセプターでリクエスト・レスポンスをロギングする。
+		// サーバー側の gRPC ミドルウェアと対になる概念（クライアント側）。
+		grpc.WithUnaryInterceptor(grpcLoggingInterceptor),
 	)
 	if err != nil {
 		return nil, nil, err
@@ -33,6 +45,35 @@ func newGRPCClient() (pb.ArticleServiceClient, *grpc.ClientConn, error) {
 	// pb.NewArticleServiceClient でサービス定義から自動生成されたクライアントを生成する。
 	// このクライアントを通じて proto で定義したメソッドを呼び出せる。
 	return pb.NewArticleServiceClient(conn), conn, nil
+}
+
+// grpcLoggingInterceptor は gRPC クライアントのユニタリーインターセプター。
+// 送信するリクエストと受信したレスポンス（またはエラー）を構造化ログに出力する。
+func grpcLoggingInterceptor(
+	ctx context.Context,
+	method string,
+	req, reply any,
+	cc *grpc.ClientConn,
+	invoker grpc.UnaryInvoker,
+	opts ...grpc.CallOption,
+) error {
+	slog.InfoContext(ctx, "gRPC request",
+		slog.String("method", method),
+		slog.Any("request", req),
+	)
+	err := invoker(ctx, method, req, reply, cc, opts...)
+	if err != nil {
+		slog.WarnContext(ctx, "gRPC error",
+			slog.String("method", method),
+			slog.Any("error", err),
+		)
+	} else {
+		slog.InfoContext(ctx, "gRPC response",
+			slog.String("method", method),
+			slog.Any("response", reply),
+		)
+	}
+	return err
 }
 
 // grpcCodeToHTTP は gRPC のエラーコードを HTTP ステータスコードに変換する。
@@ -61,7 +102,7 @@ func ListArticles(c *gin.Context) {
 	page, _ := strconv.Atoi(c.DefaultQuery("page", "1"))
 	perPage, _ := strconv.Atoi(c.DefaultQuery("per_page", "10"))
 
-	client, conn, err := newGRPCClient()
+	client, conn, err := grpcDialFunc()
 	if err != nil {
 		handler.Fail(c, http.StatusInternalServerError, handler.ErrInternal.Code, handler.ErrInternal.Message)
 		return
@@ -93,7 +134,7 @@ func GetArticle(c *gin.Context) {
 		return
 	}
 
-	client, conn, grpcErr := newGRPCClient()
+	client, conn, grpcErr := grpcDialFunc()
 	if grpcErr != nil {
 		handler.Fail(c, http.StatusInternalServerError, handler.ErrInternal.Code, handler.ErrInternal.Message)
 		return
@@ -124,7 +165,7 @@ func CreateArticle(c *gin.Context) {
 		return
 	}
 
-	client, conn, err := newGRPCClient()
+	client, conn, err := grpcDialFunc()
 	if err != nil {
 		handler.Fail(c, http.StatusInternalServerError, handler.ErrInternal.Code, handler.ErrInternal.Message)
 		return
@@ -165,7 +206,7 @@ func UpdateArticle(c *gin.Context) {
 		return
 	}
 
-	client, conn, grpcErr := newGRPCClient()
+	client, conn, grpcErr := grpcDialFunc()
 	if grpcErr != nil {
 		handler.Fail(c, http.StatusInternalServerError, handler.ErrInternal.Code, handler.ErrInternal.Message)
 		return
@@ -194,7 +235,7 @@ func DeleteArticle(c *gin.Context) {
 		return
 	}
 
-	client, conn, grpcErr := newGRPCClient()
+	client, conn, grpcErr := grpcDialFunc()
 	if grpcErr != nil {
 		handler.Fail(c, http.StatusInternalServerError, handler.ErrInternal.Code, handler.ErrInternal.Message)
 		return

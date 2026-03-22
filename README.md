@@ -57,7 +57,15 @@ DB_SEED=true go run main.go
 #### 起動（MySQL + Redis + アプリを同時起動）
 
 ```bash
-docker compose up -d
+# .env を作成し、Docker 用のホスト名に変更する
+cp .env.example .env
+# Docker 内サービス名に合わせて以下を編集:
+#   DB_HOST=mysql
+#   REDIS_HOST=redis
+#   DB_SEED=true
+#   GIN_MODE=release
+
+docker compose up -d --build
 ```
 
 MySQL・Redis のヘルスチェックが完了してからアプリが起動します。初回起動時は自動でマイグレーションとシードが実行されます。

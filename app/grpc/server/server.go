@@ -17,6 +17,15 @@ import (
 	"google.golang.org/grpc/status"
 )
 
+// NewServer は ArticleService を登録済みの gRPC サーバーインスタンスを返す。
+// 呼び出し元で任意のリスナーに対して Serve を呼び出せるため、
+// ポート指定・unix ソケット・テスト用カスタムリスナーなど用途を選ばない。
+func NewServer() *grpc.Server {
+	s := grpc.NewServer()
+	pb.RegisterArticleServiceServer(s, &articleServiceServer{})
+	return s
+}
+
 // Start は指定ポートで gRPC サーバーをブロッキングで起動する。
 // main.go から goroutine で呼び出すことを想定している。
 func Start(port string) error {
@@ -26,18 +35,10 @@ func Start(port string) error {
 		return fmt.Errorf("failed to listen on port %s: %w", port, err)
 	}
 
-	// grpc.NewServer でサーバーインスタンスを生成する。
-	// オプションでインターセプター（ミドルウェア相当）を追加できる。
-	s := grpc.NewServer()
-
-	// 生成されたコードの RegisterArticleServiceServer で
-	// サービス実装をサーバーに登録する。
-	pb.RegisterArticleServiceServer(s, &articleServiceServer{})
-
 	slog.Info("gRPC server starting", slog.String("addr", ":"+port))
 
 	// Serve はリスナーを受け取り、接続をブロッキングで処理し続ける。
-	return s.Serve(lis)
+	return NewServer().Serve(lis)
 }
 
 // articleServiceServer は pb.ArticleServiceServer インターフェースの実装。
@@ -51,7 +52,7 @@ type articleServiceServer struct {
 
 // Redis キーの定数定義
 const (
-	keyPrefix  = "grpc:article:"  // 記事ハッシュのキープレフィックス（例: grpc:article:1）
+	keyPrefix  = "grpc:article:"    // 記事ハッシュのキープレフィックス（例: grpc:article:1）
 	keyIDSet   = "grpc:article:ids" // 全記事IDを管理する Redis Set
 	keyCounter = "grpc:article:seq" // ID採番用カウンター
 )

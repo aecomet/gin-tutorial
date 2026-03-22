@@ -92,28 +92,29 @@ curl -X DELETE http://localhost:8080/api/v6/articles/1
 ## gRPC 直接呼び出し（grpcurl）
 
 grpcurl を使うと Gin を経由せずに gRPC サーバーを直接呼び出せます。
+`-proto` フラグで proto ファイルを指定します。
 
 ### サービス・メソッド一覧の確認
 
 ```bash
 # サービス一覧
-grpcurl -plaintext localhost:50051 list
+grpcurl -plaintext -proto app/grpc/proto/article.proto localhost:50051 list
 # => article.ArticleService
 
 # メソッド一覧
-grpcurl -plaintext localhost:50051 list article.ArticleService
+grpcurl -plaintext -proto app/grpc/proto/article.proto localhost:50051 list article.ArticleService
 # => article.ArticleService.CreateArticle
 # => article.ArticleService.DeleteArticle
 # => ...
 
 # メソッドの定義（引数・戻り値の型）を確認
-grpcurl -plaintext localhost:50051 describe article.ArticleService.ListArticles
+grpcurl -plaintext -proto app/grpc/proto/article.proto localhost:50051 describe article.ArticleService.ListArticles
 ```
 
 ### ListArticles（記事一覧）
 
 ```bash
-grpcurl -plaintext \
+grpcurl -plaintext -proto app/grpc/proto/article.proto \
   -d '{"page": 1, "per_page": 10}' \
   localhost:50051 article.ArticleService/ListArticles
 ```
@@ -136,14 +137,14 @@ grpcurl -plaintext \
 ### GetArticle（記事取得）
 
 ```bash
-grpcurl -plaintext \
+grpcurl -plaintext -proto app/grpc/proto/article.proto \
   -d '{"id": 1}' \
   localhost:50051 article.ArticleService/GetArticle
 ```
 
 **存在しないIDの場合（codes.NotFound）:**
 ```bash
-grpcurl -plaintext \
+grpcurl -plaintext -proto app/grpc/proto/article.proto \
   -d '{"id": 999}' \
   localhost:50051 article.ArticleService/GetArticle
 # ERROR:
@@ -154,7 +155,7 @@ grpcurl -plaintext \
 ### CreateArticle（記事作成）
 
 ```bash
-grpcurl -plaintext \
+grpcurl -plaintext -proto app/grpc/proto/article.proto \
   -d '{"title": "Protocol Buffersとは", "body": "protoファイルでスキーマを定義します", "author": "Bob"}' \
   localhost:50051 article.ArticleService/CreateArticle
 ```
@@ -163,7 +164,7 @@ grpcurl -plaintext \
 
 ```bash
 # title のみ更新（空文字フィールドは更新しない）
-grpcurl -plaintext \
+grpcurl -plaintext -proto app/grpc/proto/article.proto \
   -d '{"id": 1, "title": "新しいタイトル"}' \
   localhost:50051 article.ArticleService/UpdateArticle
 ```
@@ -171,7 +172,7 @@ grpcurl -plaintext \
 ### DeleteArticle（記事削除）
 
 ```bash
-grpcurl -plaintext \
+grpcurl -plaintext -proto app/grpc/proto/article.proto \
   -d '{"id": 1}' \
   localhost:50051 article.ArticleService/DeleteArticle
 ```
