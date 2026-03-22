@@ -4,7 +4,8 @@
 
 ```
 gin-tutorial/
-├── main.go              # エントリーポイント。DB・Redis初期化・gRPC並列起動・Ginサーバー起動
+├── main.go              # エントリーポイント。.env読み込み・DB・Redis初期化・gRPC並列起動・Ginサーバー起動
+├── .env.example         # 環境変数設定のテンプレート（cp .env.example .env して使用）
 ├── Dockerfile           # マルチステージビルド（scratch ベース）
 ├── docker-compose.yml   # docker compose up -d でアプリ + MySQL + Redis 起動
 ├── logs/                # ログ出力ディレクトリ（.gitignore: *.log）
@@ -127,6 +128,15 @@ gRPC サーバーは HTTP とは独立した **:50051** ポートで動作する
 grpcurl -plaintext localhost:50051 list
 grpcurl -plaintext -d '{"page":1,"per_page":10}' localhost:50051 article.ArticleService/ListArticles
 ```
+
+### 設定管理（.env）
+アプリ起動時に `godotenv` で `.env` ファイルを自動読み込みする。ファイルが存在しない場合はスキップ（本番環境では直接環境変数を設定）。`.env.example` をコピーして使う。
+
+```bash
+cp .env.example .env
+```
+
+`.env` は `.gitignore` に含まれているためコミットされない。
 
 ### エラーハンドリング
 `handler.AppError` 型を `c.Error()` にセットし、`middleware.ErrorHandler` が一括してJSONレスポンスに変換する。ハンドラー内で直接 `c.JSON` を呼ぶ必要はない。

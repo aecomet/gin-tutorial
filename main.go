@@ -5,6 +5,8 @@ import (
 	"log/slog"
 	"os"
 
+	"github.com/joho/godotenv"
+
 	"gin-tutorial/app/db"
 	v5 "gin-tutorial/app/domain/v5"
 	grpcserver "gin-tutorial/app/grpc/server"
@@ -14,6 +16,12 @@ import (
 )
 
 func main() {
+	// .env ファイルが存在する場合は環境変数に読み込む。
+	// ファイルが存在しない場合はスキップする（本番環境では直接環境変数を設定する）。
+	// すでに設定済みの環境変数は上書きしない。
+	if err := godotenv.Load(); err != nil && !os.IsNotExist(err) {
+		fmt.Fprintf(os.Stderr, "warning: failed to load .env: %v\n", err)
+	}
 	cleanup, err := logger.Init()
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "failed to init logger: %v\n", err)
